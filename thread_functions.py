@@ -1,18 +1,22 @@
-import threading
 import queue
 import socket
 from headers import IPHeaders, TCP_Headers
+from sys import platform
 
 
 q : queue.Queue[bytes] = queue.Queue()
 
 def capture_packets():
-    soc = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_IP)
+    if(platform == "win32"):
+        soc = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_IP)
+        HOST = "192.168.1.155"
 
-    HOST = "192.168.1.155"
+        soc.bind((HOST, 0))
+        soc.ioctl(socket.SIO_RCVALL, socket.RCVALL_ON)
 
-    soc.bind((HOST, 0))
-    soc.ioctl(socket.SIO_RCVALL, socket.RCVALL_ON)
+    elif(platform == "linux" or platform == "linux2"):
+        soc = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.IPPROTO_TCP)
+
     soc.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 16 * 1024 * 1024)
 
     while True:
