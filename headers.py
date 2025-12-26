@@ -47,14 +47,14 @@ class IPHeaders:
 
 class TCP_Headers:
     def __init__(self, raw_data):
-        tcp_header_bytes = raw_data[20:40]
+        tcp_header_bytes = raw_data[:20]
         tcp_header = struct.unpack("!HHLLBBHHH", tcp_header_bytes)
 
         self.src_port = tcp_header[0] #source port
         self.dest_port = tcp_header[1] #destination port
         self.seq = tcp_header[2] #sequence number
         self.ack = tcp_header[3] #acknowledgment number
-        self.do = (tcp_header[4] >> 4) * 4 #header length
+        self.do = (tcp_header[4] >> 4) * 4 #data offset
         self.rsv = (tcp_header[4] >> 1) & 0x07 #reserved flags
 
         self.flags = tcp_header[5] #flags
