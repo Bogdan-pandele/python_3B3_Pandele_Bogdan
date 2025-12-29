@@ -44,7 +44,6 @@ class IPHeaders:
                 f"-------------------"
             )
 
-
 class TCP_Headers:
     def __init__(self, raw_data):
         tcp_header_bytes = raw_data[:20]
@@ -85,5 +84,17 @@ class TCP_Headers:
         return (
             f"[TCP Header] Port: {self.src_port} -> {self.dest_port}\n"
             f"Seq: {self.seq} | Ack: {self.ack}\n"
-            f"Flags: [{flags_str}] | Window: {self.window} | DO: {self.do} bytes"
+            f"Flags: [{flags_str}] | Window: {self.window} | DO: {self.do} bytes\n"
+            f"-------------------"
         )
+    
+
+class HTTP_Request:
+    def __init__(self, raw_data):
+         pass
+
+
+
+class HTTP_Response:
+     def __init__(self, raw_data):
+          pass

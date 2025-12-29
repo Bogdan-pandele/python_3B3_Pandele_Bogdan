@@ -7,6 +7,7 @@ from sys import platform
 
 q: queue.Queue[bytes] = queue.Queue()
 stop_signal = threading.Event()
+http_verbs = ["GET", "POST", "PUT", "DELETE", "HEAD", "PATCH", "OPTIONS", "HTTP/"]
 
 
 def capture_packets():
@@ -43,9 +44,12 @@ def process_packets():
 
             if ip_headers.protocol == 6:  # TCP has value of 6
                 tcp_headers = TCP_Headers(raw_data[ip_headers.ihl * 4 :])
-                print(ip_headers)
-                print(tcp_headers)
-                print("\n\n")
+                data = raw_data[ip_headers.ihl * 4 + tcp_headers.do:]
+                if any(v in data[:10].decode('ascii', errors='ignore') for v in http_verbs):
+                    print(ip_headers)
+                    print(tcp_headers)
+                    print(data.decode(encoding="ascii"))
+                    print("\n\n")
         except Exception as e:
             print(f"Error: {e}")
         finally:
