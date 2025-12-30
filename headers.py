@@ -73,7 +73,7 @@ class TCP_Headers:
     def __str__(self):
         active_flags = []
         if self.urg: active_flags.append("URG")
-        if self.ack_f: active_flags.append("ACK")
+        if self.ack_f: active_flags.append("ACK")  
         if self.psh: active_flags.append("PSH")
         if self.rst: active_flags.append("RST")
         if self.syn: active_flags.append("SYN")
@@ -91,10 +91,92 @@ class TCP_Headers:
 
 class HTTP_Request:
     def __init__(self, raw_data):
-         pass
+        self.method = ""
+        self.path = ""
+        self.version = ""
+        self.host = ""
+        self.user_agent = ""
+        self.accept = ""
+        self.content_type = ""
+        self.content_length = 0
 
+        
+        try:
+            parts = raw_data.decode(encoding="ascii").split("\r\n\r\n", 1)
+            header = parts[0]
+            self.body = parts[1] if len(parts) > 1 else ""
+            lines = header.split("\r\n")
+            first_line = lines[0].split()
+            self.method = first_line[0]
+            self.path = first_line[1]
+            self.version = first_line[2]
+            for line in lines:
+                if line.startswith("Host: "):
+                    self.host = line.replace("Host: ", "").strip()        
+                elif line.startswith("User-Agent: "):
+                    self.user_agent = line.replace("User-Agent: ", "").strip()
+                elif line.startswith("Accept: "):
+                    self.accept = line.replace("Accept: ", "").strip()
+                elif line.startswith("Content-Type: "):
+                    self.content_type = line.replace("Content-Type: ", "").strip()
+                elif line.startswith("Content-Length: "):
+                    self.content_length = (int)(line.replace("Content-Length: ", "").strip())
+        except Exception as e:
+            print(f"Error parsing HTTP request: {e}")
+
+    def __str__(self):
+        return (
+            f"--- [HTTP REQUEST] ---\n"
+            f"Method: {self.method}\n"
+            f"Path:    {self.path}\n"
+            f"UA:      {self.user_agent}\n"
+            f"Body: {len(self.body)} bytes\n"
+            f"------------------------\n"
+        )
 
 
 class HTTP_Response:
-     def __init__(self, raw_data):
-          pass
+    def __init__(self, raw_data):
+        self.version = ""
+        self.status_code = 0
+        self.status_message = ""
+        self.server = ""
+        self.date = ""
+        self.content_length = 0
+        self.content_type = ""
+        self.cache = ""
+        try:
+                parts = raw_data.decode(encoding="ascii").split("\r\n\r\n", 1)
+                headers = parts[0]
+                body = parts[1] if len(parts) > 1 else ""
+
+                lines = headers.split("\r\n")
+                first_line = lines[0].split()
+
+                self.version = first_line[0]
+                self.status_code = (int)(first_line[1])
+                self.status_message = " ".join(first_line[2:])
+
+                for line in lines:
+                    if line.startswith("Server: "):
+                        self.server = line.replace("Server: ", "").strip()
+                    elif line.startswith("Date: "):
+                        self.date = line.replace("Date: ", "").strip()
+                    elif line.startswith("Content-Length: "):
+                        self.content_length = (int)(line.replace("Content-Length: ", "").strip())
+                    elif line.startswith("Content-Type: "):
+                        self.content_type = line.replace("Content-Type: ", "").strip()
+                    elif line.startswith("Cache-Control: "):
+                        self.cache = line.replace("Cache-Control: ", "").strip()                    
+        except Exception as e:
+            print(f"Error parsing HTTP response: {e}")
+    def __str__(self):
+        return (
+            f"--- [ HTTP RESPONSE ] ---\n"
+            f"Status:  {self.status_code} {self.status_message}\n"
+            f"Server:  {self.server}\n"
+            f"Type:    {self.content_type}\n"
+            f"Length:  {self.content_length} bytes\n"
+            f"Date:    {self.date}\n"
+            f"------------------------\n"
+        )

@@ -1,13 +1,13 @@
 import queue
 import socket
 import threading
-from headers import IPHeaders, TCP_Headers
+from headers import IPHeaders, TCP_Headers, HTTP_Request,HTTP_Response
 from sys import platform
 
 
 q: queue.Queue[bytes] = queue.Queue()
 stop_signal = threading.Event()
-http_verbs = ["GET", "POST", "PUT", "DELETE", "HEAD", "PATCH", "OPTIONS", "HTTP/"]
+http_verbs = ["GET", "POST", "PUT", "DELETE", "HEAD", "PATCH", "OPTIONS"]
 
 
 def capture_packets():
@@ -43,13 +43,24 @@ def process_packets():
             ip_headers = IPHeaders(raw_data)
 
             if ip_headers.protocol == 6:  # TCP has value of 6
+                if ip_headers.src == "146.190.62.39":
+                    print("BLUD")
                 tcp_headers = TCP_Headers(raw_data[ip_headers.ihl * 4 :])
                 data = raw_data[ip_headers.ihl * 4 + tcp_headers.do:]
                 if any(v in data[:10].decode('ascii', errors='ignore') for v in http_verbs):
+                    http_req = HTTP_Request(data)
                     print(ip_headers)
                     print(tcp_headers)
-                    print(data.decode(encoding="ascii"))
+                    print(http_req)
                     print("\n\n")
+                elif "HTTP/" in data[:10].decode('ascii', errors='ignore'):
+                    print("yogurt")
+                    http_resp = HTTP_Response(data)                    
+                    print(ip_headers)
+                    print(tcp_headers)
+                    print(http_resp)
+                    print("\n\n")
+
         except Exception as e:
             print(f"Error: {e}")
         finally:
