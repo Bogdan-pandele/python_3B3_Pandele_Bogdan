@@ -99,7 +99,7 @@ class HTTP_Request:
         self.accept = ""
         self.content_type = ""
         self.content_length = 0
-
+        self.date = ""
         
         try:
             parts = raw_data.decode(encoding="ascii").split("\r\n\r\n", 1)
@@ -121,6 +121,8 @@ class HTTP_Request:
                     self.content_type = line.replace("Content-Type: ", "").strip()
                 elif line.startswith("Content-Length: "):
                     self.content_length = (int)(line.replace("Content-Length: ", "").strip())
+                elif line.lower().startswith("date: "):
+                    self.date = line.split(": ", 1)[1].strip()
         except Exception as e:
             print(f"Error parsing HTTP request: {e}")
 
@@ -130,6 +132,7 @@ class HTTP_Request:
             f"Method: {self.method}\n"
             f"Path:    {self.path}\n"
             f"UA:      {self.user_agent}\n"
+            f"Date: {self.date}\n"
             f"Body: {len(self.body)} bytes\n"
             f"------------------------\n"
         )

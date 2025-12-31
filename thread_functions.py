@@ -43,8 +43,6 @@ def process_packets():
             ip_headers = IPHeaders(raw_data)
 
             if ip_headers.protocol == 6:  # TCP has value of 6
-                if ip_headers.src == "146.190.62.39":
-                    print("BLUD")
                 tcp_headers = TCP_Headers(raw_data[ip_headers.ihl * 4 :])
                 data = raw_data[ip_headers.ihl * 4 + tcp_headers.do:]
                 if any(v in data[:10].decode('ascii', errors='ignore') for v in http_verbs):
@@ -54,7 +52,6 @@ def process_packets():
                     print(http_req)
                     print("\n\n")
                 elif "HTTP/" in data[:10].decode('ascii', errors='ignore'):
-                    print("yogurt")
                     http_resp = HTTP_Response(data)                    
                     print(ip_headers)
                     print(tcp_headers)
