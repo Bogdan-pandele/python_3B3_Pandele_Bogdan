@@ -34,19 +34,22 @@ def capture_packets():
             print(f"Error: {e}")
 
 
-def process_packets():
+def process_packets(method = None, src = None, dest = None):
     while True:
         raw_data = q.get()
         if platform != "win32":
             raw_data = raw_data[14:]
         try:
             ip_headers = IPHeaders(raw_data)
-
+            if (ip_headers.src != src and src is not None) or (ip_headers.dest != dest and dest is not None):
+                continue
             if ip_headers.protocol == 6:  # TCP has value of 6
                 tcp_headers = TCP_Headers(raw_data[ip_headers.ihl * 4 :])
                 data = raw_data[ip_headers.ihl * 4 + tcp_headers.do:]
                 if any(v in data[:10].decode('ascii', errors='ignore') for v in http_verbs):
                     http_req = HTTP_Request(data)
+                    if http_req.method != method and method is not None:
+                        continue
                     print(ip_headers)
                     print(tcp_headers)
                     print(http_req)
