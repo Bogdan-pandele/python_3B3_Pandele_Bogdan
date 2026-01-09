@@ -133,7 +133,8 @@ class HTTP_Request:
             f"Path:    {self.path}\n"
             f"UA:      {self.user_agent}\n"
             f"Date: {self.date}\n"
-            f"Body: {len(self.body)} bytes\n"
+            f"Body Length: {len(self.body)} bytes\n"
+            f"Body: {self.body}\n"
             f"------------------------\n"
         )
 
@@ -151,7 +152,7 @@ class HTTP_Response:
         try:
                 parts = raw_data.decode(encoding="ascii").split("\r\n\r\n", 1)
                 headers = parts[0]
-                body = parts[1] if len(parts) > 1 else ""
+                self.body = parts[1] if len(parts) > 1 else ""
 
                 lines = headers.split("\r\n")
                 first_line = lines[0].split()
@@ -181,5 +182,6 @@ class HTTP_Response:
             f"Type:    {self.content_type}\n"
             f"Length:  {self.content_length} bytes\n"
             f"Date:    {self.date}\n"
+            f"Body:    {self.body}\n"
             f"------------------------\n"
         )
