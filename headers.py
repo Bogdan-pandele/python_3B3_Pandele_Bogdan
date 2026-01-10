@@ -1,84 +1,106 @@
 import struct
 import socket
 
+
 class IPHeaders:
+    """
+    Represents an IPv4 Header(OSI Layer 3 - Network Layer)
+
+    Reference: See https://networklessons.com/ip-routing/ipv4-packet-header.
+
+    Uses struct.unpack() to unpack data with the format '!BBHHHBBH4s4s' to parse the
+    first 20 bytes of the captured packet into its repsective fields
+    """
+
     def __init__(self, raw_data):
         ip_header_bytes = raw_data[:20]
         ip_header = struct.unpack("!BBHHHBBH4s4s", ip_header_bytes)
 
-        self.version = ip_header[0] >> 4 #version
-        # format(self.version, "08b")
+        self.version = ip_header[0] >> 4  # version
 
-        self.ihl = ip_header[0] & 0x0F  #header length
-        # format(self.ihl, "08b")
+        self.ihl = ip_header[0] & 0x0F  # header length
 
-        self.tos = ip_header[1] #type of service
+        self.tos = ip_header[1]  # type of service
 
-        self.total_len = ip_header[2] #total length
+        self.total_len = ip_header[2]  # total length
 
-        self.id = ip_header[3] #identification
+        self.id = ip_header[3]  # identification
 
-        self.flags = ip_header[4] #flags
+        self.flags = ip_header[4]  # flags
         # format(self.flags >> 13, "03b")
 
-        self.offset = ip_header[4] & 0x1FFF #fragment offset
-        
-        self.ttl = ip_header[5] #time to live
+        self.offset = ip_header[4] & 0x1FFF  # fragment offset
 
-        self.protocol = ip_header[6] #protocol used
+        self.ttl = ip_header[5]  # time to live
 
-        self.checksum = ip_header[7] #checksum
+        self.protocol = ip_header[6]  # protocol used
 
-        self.src = socket.inet_ntoa(ip_header[8]) #source adress
+        self.checksum = ip_header[7]  # checksum
 
-        self.dest = socket.inet_ntoa(ip_header[9]) #destination adress
+        self.src = socket.inet_ntoa(ip_header[8])  # source adress
+
+        self.dest = socket.inet_ntoa(ip_header[9])  # destination adress
 
     def __str__(self):
-            return (
-                f"--- [IP Header] ---\n"
-                f"Version: {self.version} | IHL: {self.ihl*4} bytes | ToS: {self.tos}\n"
-                f"Total Length: {self.total_len} | ID: {self.id}\n"
-                f"Flags: {self.flags} | Offset: {self.offset}\n"
-                f"TTL: {self.ttl} | Protocol: {self.protocol} | Checksum: {self.checksum}\n"
-                f"Source: {self.src} -> Destination: {self.dest}\n"
-                f"-------------------"
-            )
+        return (
+            f"--- [IP Header] ---\n"
+            f"Version: {self.version} | IHL: {self.ihl * 4} bytes | ToS: {self.tos}\n"
+            f"Total Length: {self.total_len} | ID: {self.id}\n"
+            f"Flags: {self.flags} | Offset: {self.offset}\n"
+            f"TTL: {self.ttl} | Protocol: {self.protocol} | Checksum: {self.checksum}\n"
+            f"Source: {self.src} -> Destination: {self.dest}\n"
+            f"-------------------"
+        )
+
 
 class TCP_Headers:
+    """
+    Represents a TCP Header. See https://networklessons.com/ip-routing/tcp-header.
+
+    TCP Headers are located in layer 4 of OSI Model(Transport Layer)
+
+    This class expects raw data starting from the TCP segment (IP payload), so it jumps the first 20 bytes of the IP payload.
+
+    """
+
     def __init__(self, raw_data):
         tcp_header_bytes = raw_data[:20]
         tcp_header = struct.unpack("!HHLLBBHHH", tcp_header_bytes)
 
-        self.src_port = tcp_header[0] #source port
-        self.dest_port = tcp_header[1] #destination port
-        self.seq = tcp_header[2] #sequence number
-        self.ack = tcp_header[3] #acknowledgment number
-        self.do = (tcp_header[4] >> 4) * 4 #data offset
-        self.rsv = (tcp_header[4] >> 1) & 0x07 #reserved flags
+        self.src_port = tcp_header[0]  # source port
+        self.dest_port = tcp_header[1]  # destination port
+        self.seq = tcp_header[2]  # sequence number
+        self.ack = tcp_header[3]  # acknowledgment number
+        self.do = (tcp_header[4] >> 4) * 4  # data offset
+        self.rsv = (tcp_header[4] >> 1) & 0x07  # reserved flags
 
-        self.flags = tcp_header[5] #flags
+        self.flags = tcp_header[5]  # flags
         self.urg = (self.flags & 0x20) >> 5
         self.ack_f = (self.flags & 0x10) >> 4
         self.psh = (self.flags & 0x08) >> 3
         self.rst = (self.flags & 0x04) >> 2
         self.syn = (self.flags & 0x02) >> 1
-        self.fin = (self.flags & 0x01)
+        self.fin = self.flags & 0x01
 
+        self.window = tcp_header[6]  # window - how many bytes user recieves
+        self.checksum = tcp_header[7]  # checksum
+        self.urgent_ptr = tcp_header[8]  # urgent pointer
 
-
-        self.window = tcp_header[6] #window - how many bytes user recieves
-        self.checksum = tcp_header[7] #checksum
-        self.urgent_ptr = tcp_header[8] #urgent pointer
-        
     def __str__(self):
         active_flags = []
-        if self.urg: active_flags.append("URG")
-        if self.ack_f: active_flags.append("ACK")  
-        if self.psh: active_flags.append("PSH")
-        if self.rst: active_flags.append("RST")
-        if self.syn: active_flags.append("SYN")
-        if self.fin: active_flags.append("FIN")
-        
+        if self.urg:
+            active_flags.append("URG")
+        if self.ack_f:
+            active_flags.append("ACK")
+        if self.psh:
+            active_flags.append("PSH")
+        if self.rst:
+            active_flags.append("RST")
+        if self.syn:
+            active_flags.append("SYN")
+        if self.fin:
+            active_flags.append("FIN")
+
         flags_str = "|".join(active_flags) if active_flags else "None"
 
         return (
@@ -87,10 +109,20 @@ class TCP_Headers:
             f"Flags: [{flags_str}] | Window: {self.window} | DO: {self.do} bytes\n"
             f"-------------------"
         )
-    
+
 
 class HTTP_Request:
+    """
+    HTTP Packets are either HTTP Requests or HTTP Responses, each with their own structure.
+
+    See https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Messages.
+
+    """
+
     def __init__(self, raw_data):
+        """
+        Decodes the raw data into a Http Request structure
+        """
         self.method = ""
         self.path = ""
         self.version = ""
@@ -100,9 +132,9 @@ class HTTP_Request:
         self.content_type = ""
         self.content_length = 0
         self.date = ""
-        
+
         try:
-            parts = raw_data.decode(encoding="ascii").split("\r\n\r\n", 1)
+            parts = raw_data.decode(encoding="latin-1").split("\r\n\r\n", 1)
             header = parts[0]
             self.body = parts[1] if len(parts) > 1 else ""
             lines = header.split("\r\n")
@@ -112,7 +144,7 @@ class HTTP_Request:
             self.version = first_line[2]
             for line in lines:
                 if line.startswith("Host: "):
-                    self.host = line.replace("Host: ", "").strip()        
+                    self.host = line.replace("Host: ", "").strip()
                 elif line.startswith("User-Agent: "):
                     self.user_agent = line.replace("User-Agent: ", "").strip()
                 elif line.startswith("Accept: "):
@@ -120,7 +152,9 @@ class HTTP_Request:
                 elif line.startswith("Content-Type: "):
                     self.content_type = line.replace("Content-Type: ", "").strip()
                 elif line.startswith("Content-Length: "):
-                    self.content_length = (int)(line.replace("Content-Length: ", "").strip())
+                    self.content_length = (int)(
+                        line.replace("Content-Length: ", "").strip()
+                    )
                 elif line.lower().startswith("date: "):
                     self.date = line.split(": ", 1)[1].strip()
         except Exception as e:
@@ -140,7 +174,18 @@ class HTTP_Request:
 
 
 class HTTP_Response:
+    """
+    HTTP Packets are either HTTP Requests or HTTP Responses, each with their own structure.
+
+    See https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Messages.
+
+    """
+
     def __init__(self, raw_data):
+        """
+        Decodes the raw data into a Http Response structure
+        """
+
         self.version = ""
         self.status_code = 0
         self.status_message = ""
@@ -149,31 +194,35 @@ class HTTP_Response:
         self.content_length = 0
         self.content_type = ""
         self.cache = ""
+        self.body = ""
         try:
-                parts = raw_data.decode(encoding="ascii").split("\r\n\r\n", 1)
-                headers = parts[0]
-                self.body = parts[1] if len(parts) > 1 else ""
+            parts = raw_data.decode(encoding="latin-1").split("\r\n\r\n", 1)
+            headers = parts[0]
+            self.body = parts[1] if len(parts) > 1 else ""
 
-                lines = headers.split("\r\n")
-                first_line = lines[0].split()
+            lines = headers.split("\r\n")
+            first_line = lines[0].split()
 
-                self.version = first_line[0]
-                self.status_code = (int)(first_line[1])
-                self.status_message = " ".join(first_line[2:])
+            self.version = first_line[0]
+            self.status_code = (int)(first_line[1])
+            self.status_message = " ".join(first_line[2:])
 
-                for line in lines:
-                    if line.startswith("Server: "):
-                        self.server = line.replace("Server: ", "").strip()
-                    elif line.startswith("Date: "):
-                        self.date = line.replace("Date: ", "").strip()
-                    elif line.startswith("Content-Length: "):
-                        self.content_length = (int)(line.replace("Content-Length: ", "").strip())
-                    elif line.startswith("Content-Type: "):
-                        self.content_type = line.replace("Content-Type: ", "").strip()
-                    elif line.startswith("Cache-Control: "):
-                        self.cache = line.replace("Cache-Control: ", "").strip()                    
+            for line in lines:
+                if line.startswith("Server: "):
+                    self.server = line.replace("Server: ", "").strip()
+                elif line.startswith("Date: "):
+                    self.date = line.replace("Date: ", "").strip()
+                elif line.startswith("Content-Length: "):
+                    self.content_length = (int)(
+                        line.replace("Content-Length: ", "").strip()
+                    )
+                elif line.startswith("Content-Type: "):
+                    self.content_type = line.replace("Content-Type: ", "").strip()
+                elif line.startswith("Cache-Control: "):
+                    self.cache = line.replace("Cache-Control: ", "").strip()
         except Exception as e:
             print(f"Error parsing HTTP response: {e}")
+
     def __str__(self):
         return (
             f"--- [ HTTP RESPONSE ] ---\n"
